@@ -16,22 +16,22 @@ Another caveat is that Houston doesn't manage device tokens for you. For that, y
 
 ## Installation
 
-    $ gem install houston
+    $ gem install malt-houston
 
 ## Usage
 
 ```ruby
-require 'houston'
+require 'malt-houston'
 
 # Environment variables are automatically read, or can be overridden by any specified options. You can also
 # conveniently use `Houston::Client.development` or `Houston::Client.production`.
-APN = Houston::Client.development("/path/to/apple_push_notification.pem")
+APN = MaltHouston::Client.development("/path/to/apple_push_notification.pem")
 
 # An example of the token sent back when a device registers for notifications
 token = "<ce8be627 2e43e855 16033e24 b4c28922 0eeda487 9c477160 b2545e95 b68b5969>"
 
 # Create a notification that alerts a message to the user, plays a sound, and sets the badge on the app
-notification = Houston::Notification.new(device: token)
+notification = MaltHouston::Notification.new(device: token)
 notification.alert = "Hello, World!"
 
 # Notifications can also change the badge count, have a custom sound, have a category identifier, indicate available Newsstand content, or pass along arbitrary data.
@@ -60,25 +60,8 @@ puts "Error: #{notification.error}." if notification.error
 To send a silent push notification, set `sound` to an empty string (`''`):
 
 ```ruby
-Houston::Notification.new(:sound => '',
+MaltHouston::Notification.new(:sound => '',
                           :content_available => true)
-```
-
-### Persistent Connections
-
-If you want to manage your own persistent connection to Apple push services, such as for background workers, here's how to do it:
-
-```ruby
-certificate = File.read("/path/to/apple_push_notification.pem")
-passphrase = "..."
-connection = Houston::Connection.new(Houston::APPLE_DEVELOPMENT_GATEWAY_URI, certificate, passphrase)
-connection.open
-
-notification = Houston::Notification.new(device: token)
-notification.alert = "Hello, World!"
-connection.write(notification.message)
-
-connection.close
 ```
 
 ### Feedback Service
@@ -86,7 +69,7 @@ connection.close
 Apple provides a feedback service to query for unregistered device tokens, these are devices that have failed to receive a push notification and should be removed from your application. You should periodically query for and remove these devices, Apple audits providers to ensure they are removing unregistered devices. To obtain the list of unregistered device tokens:
 
 ```ruby
-Houston::Client.development.devices
+MaltHouston::Client.development.devices
 ```
 
 ## Versioning

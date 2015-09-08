@@ -1,5 +1,5 @@
 require 'forwardable'
-module Houston
+module MaltHouston
   APPLE_PRODUCTION_GATEWAY_URI = "apn://gateway.push.apple.com:2195"
   APPLE_PRODUCTION_FEEDBACK_URI = "apn://feedback.push.apple.com:2196"
 
