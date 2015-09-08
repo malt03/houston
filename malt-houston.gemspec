@@ -3,15 +3,15 @@ $:.push File.expand_path("../lib", __FILE__)
 require "houston/version"
 
 Gem::Specification.new do |s|
-  s.name        = "houston"
-  s.authors     = ["Mattt Thompson"]
-  s.email       = "m@mattt.me"
+  s.name        = "malt-houston"
+  s.authors     = ["Koji Murata"]
+  s.email       = "malt.koji@gmail.com"
   s.license     = "MIT"
-  s.homepage    = "http://nomad-cli.com"
-  s.version     = Houston::VERSION
+  s.homepage    = "https://github.com/malt03/malt-houston"
+  s.version     = MaltHouston::VERSION
   s.platform    = Gem::Platform::RUBY
-  s.summary     = "Send Apple Push Notifications"
-  s.description = "Houston is a simple gem for sending Apple Push Notifications. Pass your credentials, construct your message, and send it."
+  s.summary     = "fork from Houston"
+  s.description = "fork from Houston (https://github.com/nomad/houston)"
 
   s.add_dependency "commander", "~> 4.1"
   s.add_dependency "json"

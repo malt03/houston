@@ -3,7 +3,7 @@ require 'socket'
 require 'openssl'
 require 'forwardable'
 
-module Houston
+module MaltHouston
   class Connection
     extend Forwardable
     def_delegators :@ssl, :read, :write
