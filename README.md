@@ -25,8 +25,7 @@ require 'houston'
 
 # Environment variables are automatically read, or can be overridden by any specified options. You can also
 # conveniently use `Houston::Client.development` or `Houston::Client.production`.
-APN = Houston::Client.development
-APN.certificate = File.read("/path/to/apple_push_notification.pem")
+APN = Houston::Client.development("/path/to/apple_push_notification.pem")
 
 # An example of the token sent back when a device registers for notifications
 token = "<ce8be627 2e43e855 16033e24 b4c28922 0eeda487 9c477160 b2545e95 b68b5969>"
