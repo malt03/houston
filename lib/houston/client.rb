@@ -1,3 +1,4 @@
+require 'forwardable'
 module Houston
   APPLE_PRODUCTION_GATEWAY_URI = "apn://gateway.push.apple.com:2195"
   APPLE_PRODUCTION_FEEDBACK_URI = "apn://feedback.push.apple.com:2196"
@@ -6,58 +7,61 @@ module Houston
   APPLE_DEVELOPMENT_FEEDBACK_URI = "apn://feedback.sandbox.push.apple.com:2196"
 
   class Client
-    attr_accessor :gateway_uri, :feedback_uri, :certificate, :passphrase, :timeout
+    attr_accessor :gateway_uri, :feedback_uri, :certificate, :passphrase, :timeout, :connection
+    extend Forwardable
+    def_delegators :@connection, :open, :open?, :close, :closed?
 
     class << self
-      def development
-        client = self.new
-        client.gateway_uri = APPLE_DEVELOPMENT_GATEWAY_URI
-        client.feedback_uri = APPLE_DEVELOPMENT_FEEDBACK_URI
+      def development(certificate_file_name, passphrase=nil)
+        client = self.new(APPLE_DEVELOPMENT_GATEWAY_URI, APPLE_DEVELOPMENT_FEEDBACK_URI, certificate_file_name, passphrase)
         client
       end
 
-      def production
-        client = self.new
-        client.gateway_uri = APPLE_PRODUCTION_GATEWAY_URI
-        client.feedback_uri = APPLE_PRODUCTION_FEEDBACK_URI
+      def production(certificate_file_name, passphrase=nil)
+        client = self.new(APPLE_PRODUCTION_GATEWAY_URI, APPLE_PRODUCTION_FEEDBACK_URI, certificate_file_name, passphrase)
         client
       end
     end
 
-    def initialize
-      @gateway_uri = ENV['APN_GATEWAY_URI']
-      @feedback_uri = ENV['APN_FEEDBACK_URI']
-      @certificate = File.read(ENV['APN_CERTIFICATE']) if ENV['APN_CERTIFICATE']
-      @passphrase = ENV['APN_CERTIFICATE_PASSPHRASE']
+    def initialize(gateway_uri, feedback_uri, certificate_file_name, passphrase)
+      @gateway_uri = gateway_uri
+      @feedback_uri = feedback_uri
+      @certificate = File.read(certificate_file_name)
+      @passphrase = passphrase
       @timeout = Float(ENV['APN_TIMEOUT'] || 0.5)
+      @connection = Connection.new(@gateway_uri, @certificate, @passphrase)
     end
 
     def push(*notifications)
+      raise('please open') if closed?
       return if notifications.empty?
 
       notifications.flatten!
 
-      Connection.open(@gateway_uri, @certificate, @passphrase) do |connection|
-        ssl = connection.ssl
+      notifications.each_with_index do |notification, index|
+        next unless notification.kind_of?(Notification)
+        next if notification.sent?
+        next unless notification.valid?
 
-        notifications.each_with_index do |notification, index|
-          next unless notification.kind_of?(Notification)
-          next if notification.sent?
-          next unless notification.valid?
+        notification.id = index
 
-          notification.id = index
+        @connection.write(notification.message)
+        notification.mark_as_sent!
 
-          connection.write(notification.message)
-          notification.mark_as_sent!
+        ssl = @connection.ssl
+        read_socket, write_socket = IO.select([ssl], [], [ssl], timeout)
 
-          read_socket, write_socket = IO.select([ssl], [ssl], [ssl], nil)
-          if (read_socket && read_socket[0])
-            if error = connection.read(6)
-              command, status, index = error.unpack("ccN")
-              notification.apns_error_code = status
-              notification.mark_as_unsent!
-            end
+        if (read_socket && read_socket[0])
+          if error = @connection.ssl.read(6)
+            command, status, index = error.unpack("ccN")
+            notification.apns_error_code = status
+            notification.mark_as_unsent!
+            @connection.close
+            @connection.open
           end
+        else
+          notification.apns_error_code = 0
+          notification.mark_as_unsent!
         end
       end
     end
