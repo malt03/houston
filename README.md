@@ -43,7 +43,9 @@ notification.content_available = true
 notification.custom_data = {foo: "bar"}
 
 # And... sent! That's all it takes.
+APN.open
 APN.push(notification)
+APN.close
 ```
 
 ### Error Handling
